@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Страница регистрации</title>
+        <style>
+            body { font-family: system-ui, sans-serif; max-width: 400px; margin: 40px auto; padding: 16px; }
+            label { display: block; margin-top: 12px; }
+            input { width: 100%; padding: 6px; box-sizing: border-box; }
+            button { margin-top: 16px; padding: 8px 12px; cursor: pointer; }
+            #resend_btn { margin-top: 12px; width: 100%; }
+        </style>
+    </head>
+    <body>
+        <form id="main_form">
+            <label for="login">Логин: </label>
+            <input type="text" name="login" id="login" required>
+
+            <label for="email">Email: </label>
+            <input type="email" name="email" id="email" required>
+
+            <label for="password">Пароль: </label>
+            <input type="password" name="password" id="password" required>
+
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+        <button type="button" id="resend_btn" disabled>Повторно отправить ссылку подтверждения email</button>
+        
+        <script>
+            const form = document.getElementById('main_form');
+            const resend_btn = document.getElementById('resend_btn')
+
+            form.addEventListener('submit', async (event) => {
+
+                event.preventDefault();
+                const data = {
+                    login: form.elements.login.value,
+                    email: form.elements.email.value,
+                    password: form.elements.password.value,
+                };
+
+                try {
+                    const response = await fetch('/api/registration/new_user', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data),
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        alert('Форма успешно отправлена! На ваш email придет подтверждение');
+                    } else {
+                        alert('Ошибка при отправке: ' + response.status);
+                    }
+                } catch (error) {
+                    console.error('Произошла ошибка запроса:', error);
+                    alert('Не удалось связаться с сервером.');
+                }
+                setTimeout(() => {resend_btn.disabled = false}, 3000)
+            });
+
+            resend_btn.addEventListener('click', async () => {
+                const email = form.elements.email.value;
+                try {
+                    const response = await fetch('/api/registration/resend_email', {
+                        method: 'PATCH',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({email: email})
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        alert(`На email ${email} придет подтверждение`);
+                        
+                        resend_btn.disabled = true
+                        setTimeout(() => {resend_btn.disabled = false}, 15000)
+                    } else {
+                        alert('Ошибка при отправке: ' + response.status);
+                    }
+                } catch (error) {
+                    console.error('Произошла ошибка запроса:', error);
+                    alert('Не удалось связаться с сервером.');
+                }
+            })
+        </script>
+    </body>
+</html>
